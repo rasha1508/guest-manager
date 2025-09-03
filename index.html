@@ -517,12 +517,10 @@
         tables: [],
         tablePositions: {},
       };
-
       // DOM Elements
       let guestNameInput, guestSideInput, guestRSVPInput, invitationSentInput, saveTheDateInput;
       let addGuestBtn, guestTableBody, exportGuestsPDFBtn, resetGuestsBtn;
       let emptyGuestRow, notification, notificationText;
-
       // Initialize the application
       function initApp() {
         // Get DOM elements
@@ -538,10 +536,8 @@
         emptyGuestRow = document.getElementById("emptyGuestRow");
         notification = document.getElementById("notification");
         notificationText = document.getElementById("notificationText");
-
         // Load data from localStorage if available
         loadData();
-
         // Attach event listeners
         if (addGuestBtn) {
           addGuestBtn.addEventListener("click", addGuest);
@@ -557,7 +553,6 @@
         if (resetGuestsBtn) {
           resetGuestsBtn.addEventListener("click", resetGuests);
         }
-
         // Edit and delete guest event listeners
         document.addEventListener("click", (e) => {
           if (e.target.closest(".guest-row .edit-guest")) {
@@ -565,32 +560,25 @@
             const guestRow = btn.closest(".guest-row");
             editGuest(guestRow);
           }
-
           // Delete guest from table - NO CONFIRMATION
           if (e.target.closest(".guest-row .delete-guest")) {
             const btn = e.target.closest(".delete-guest");
             const name = btn.dataset.name;
             const row = btn.closest(".guest-row");
-
             // Remove from data model
             weddingData.guests = weddingData.guests.filter(
               (g) => g.name !== name
             );
-
             // Remove from tables
             weddingData.tables.forEach((table) => {
               if (table.guests) {
                 table.guests = table.guests.filter((g) => g !== name);
               }
             });
-
             saveData();
-
             // Remove from table
             row.remove();
-
             showNotification(`${name} removed from guest list`);
-
             // Show empty state if no guests
             if (
               guestTableBody.children.length === 1 &&
@@ -598,10 +586,12 @@
             ) {
               emptyGuestRow.style.display = "table-row";
             }
+            
+            // Dispatch custom event to notify other components that guest data has changed
+            window.dispatchEvent(new CustomEvent('guestDataChanged', { detail: { deleted: true, name } }));
           }
         });
       }
-
       // Load data from localStorage if available
       function loadData() {
         try {
@@ -617,7 +607,6 @@
           console.error("Error loading data from localStorage:", error);
         }
       }
-
       // Save data to localStorage
       function saveData() {
         try {
@@ -634,7 +623,6 @@
           );
         }
       }
-
       // Render guest data
       function renderGuestData() {
         console.log("Rendering guest data...");
@@ -662,7 +650,6 @@
           }
         }
       }
-
       // Show notification
       function showNotification(message, type = "success") {
         if (notification && notificationText) {
@@ -681,7 +668,6 @@
           }, 3000);
         }
       }
-
       // Check if guest exists anywhere
       function guestExistsAnywhere(name) {
         if (!guestTableBody) return false;
@@ -690,7 +676,6 @@
         );
         return inTable;
       }
-
       // Add guest function
       function addGuest() {
         if (!guestNameInput || !guestSideInput || !guestRSVPInput || !invitationSentInput || !saveTheDateInput) return;
@@ -704,12 +689,10 @@
           showNotification("Guest already exists!", "error");
           return;
         }
-
         const side = guestSideInput.value;
         const rsvp = guestRSVPInput.value;
         const invitationSent = invitationSentInput.value;
         const saveTheDate = saveTheDateInput.value;
-
         // Add to data model
         const guest = {
           name,
@@ -720,22 +703,21 @@
         };
         weddingData.guests.push(guest);
         saveData();
-
         // Add to table view
         addGuestToTable(name, side, rsvp, invitationSent, saveTheDate);
-
         // Clear form
         guestNameInput.value = "";
         showNotification(`Guest "${name}" added successfully`);
+        
+        // Dispatch custom event to notify other components that guest data has changed
+        window.dispatchEvent(new CustomEvent('guestDataChanged', { detail: { guest: { name, side, rsvp } } }));
       }
-
       // Add guest to table view
       function addGuestToTable(name, side, rsvp, invitationSent, saveTheDate) {
         if (!guestTableBody || !emptyGuestRow) return;
         
         // Remove empty state if visible
         emptyGuestRow.style.display = "none";
-
         const row = document.createElement("tr");
         row.className = "guest-row";
         row.dataset.name = name;
@@ -743,10 +725,8 @@
         row.dataset.rsvp = rsvp;
         row.dataset.invitation = invitationSent;
         row.dataset.savethedate = saveTheDate;
-
         const sideClass = side.toLowerCase();
         const rsvpClass = rsvp.toLowerCase();
-
         row.innerHTML = `
           <td>${name}</td>
           <td><span class="side-badge side-${sideClass}">${side}</span></td>
@@ -764,10 +744,8 @@
             </div>
           </td>
         `;
-
         guestTableBody.appendChild(row);
       }
-
       // Edit guest function
       function editGuest(guestElement) {
         const name = guestElement.dataset.name;
@@ -775,7 +753,6 @@
         const rsvp = guestElement.dataset.rsvp;
         const invitation = guestElement.dataset.invitation || "No";
         const saveTheDate = guestElement.dataset.savethedate || "No";
-
         // Create edit form
         const editForm = document.createElement("div");
         editForm.className = "edit-form";
@@ -842,12 +819,10 @@
             <button id="cancelGuestEdit" class="secondary-btn"><i class="fas fa-times"></i> Cancel</button>
           </div>
         `;
-
         // Replace the guest element with the form
         const newRow = document.createElement("tr");
         newRow.appendChild(editForm);
         guestElement.parentNode.replaceChild(newRow, guestElement);
-
         // Handle save
         document
           .getElementById("saveGuestEdit")
@@ -861,12 +836,10 @@
               document.getElementById("editInvitationSent").value;
             const newSaveTheDate =
               document.getElementById("editSaveTheDate").value;
-
             if (!newName) {
               showNotification("Guest name cannot be empty", "error");
               return;
             }
-
             // Check if new name already exists (if name changed)
             if (newName !== name && guestExistsAnywhere(newName)) {
               showNotification(
@@ -875,7 +848,6 @@
               );
               return;
             }
-
             // Update data model
             const guestIndex = weddingData.guests.findIndex(
               (g) => g.name === name
@@ -890,17 +862,14 @@
               };
               saveData();
             }
-
             // Update the guest element with new values
             guestElement.dataset.name = newName;
             guestElement.dataset.side = newSide;
             guestElement.dataset.rsvp = newRSVP;
             guestElement.dataset.invitation = newInvitation;
             guestElement.dataset.savethedate = newSaveTheDate;
-
             const sideClass = newSide.toLowerCase();
             const rsvpClass = newRSVP.toLowerCase();
-
             guestElement.innerHTML = `
               <td>${newName}</td>
               <td><span class="side-badge side-${sideClass}">${newSide}</span></td>
@@ -918,13 +887,13 @@
                 </div>
               </td>
             `;
-
             // Replace form with updated guest element
             newRow.parentNode.replaceChild(guestElement, newRow);
-
             showNotification(`Guest "${newName}" updated successfully`);
+            
+            // Dispatch custom event to notify other components that guest data has changed
+            window.dispatchEvent(new CustomEvent('guestDataChanged', { detail: { guest: { name: newName, side: newSide, rsvp: newRSVP } } }));
           });
-
         // Handle cancel
         document
           .getElementById("cancelGuestEdit")
@@ -932,7 +901,6 @@
             newRow.parentNode.replaceChild(guestElement, newRow);
           });
       }
-
       // Export Guest List PDF
       function exportGuestListPDF() {
         try {
@@ -977,7 +945,6 @@
           showNotification("Error generating guest list. Please try again.", "error");
         }
       }
-
       // Reset guests data - NO CONFIRMATION
       function resetGuests() {
         // Clear guest data but keep tables
@@ -991,22 +958,21 @@
         });
         
         saveData();
-
         // Clear guest table
         if (guestTableBody && emptyGuestRow) {
           guestTableBody.innerHTML = "";
           guestTableBody.appendChild(emptyGuestRow);
           emptyGuestRow.style.display = "table-row";
         }
-
         // Clear inputs
         if (guestNameInput) {
           guestNameInput.value = "";
         }
-
         showNotification("All guest data has been reset");
+        
+        // Dispatch custom event to notify other components that guest data has changed
+        window.dispatchEvent(new CustomEvent('guestDataChanged', { detail: { reset: true } }));
       }
-
       // Initialize the app when DOM is loaded
       document.addEventListener("DOMContentLoaded", initApp);
     </script>
