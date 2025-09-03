@@ -510,7 +510,6 @@
       <i class="fas fa-check-circle"></i>
       <span id="notificationText">Notification text</span>
     </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>
       // Initialize data from localStorage or set defaults
       let weddingData = {
@@ -520,18 +519,88 @@
       };
 
       // DOM Elements
-      const guestNameInput = document.getElementById("guestName");
-      const guestSideInput = document.getElementById("guestSide");
-      const guestRSVPInput = document.getElementById("guestRSVP");
-      const invitationSentInput = document.getElementById("invitationSent");
-      const saveTheDateInput = document.getElementById("saveTheDate");
-      const addGuestBtn = document.getElementById("addGuest");
-      const guestTableBody = document.getElementById("guestTableBody");
-      const exportGuestsPDFBtn = document.getElementById("exportGuestsPDF");
-      const resetGuestsBtn = document.getElementById("resetGuests");
-      const emptyGuestRow = document.getElementById("emptyGuestRow");
-      const notification = document.getElementById("notification");
-      const notificationText = document.getElementById("notificationText");
+      let guestNameInput, guestSideInput, guestRSVPInput, invitationSentInput, saveTheDateInput;
+      let addGuestBtn, guestTableBody, exportGuestsPDFBtn, resetGuestsBtn;
+      let emptyGuestRow, notification, notificationText;
+
+      // Initialize the application
+      function initApp() {
+        // Get DOM elements
+        guestNameInput = document.getElementById("guestName");
+        guestSideInput = document.getElementById("guestSide");
+        guestRSVPInput = document.getElementById("guestRSVP");
+        invitationSentInput = document.getElementById("invitationSent");
+        saveTheDateInput = document.getElementById("saveTheDate");
+        addGuestBtn = document.getElementById("addGuest");
+        guestTableBody = document.getElementById("guestTableBody");
+        exportGuestsPDFBtn = document.getElementById("exportGuestsPDF");
+        resetGuestsBtn = document.getElementById("resetGuests");
+        emptyGuestRow = document.getElementById("emptyGuestRow");
+        notification = document.getElementById("notification");
+        notificationText = document.getElementById("notificationText");
+
+        // Load data from localStorage if available
+        loadData();
+
+        // Attach event listeners
+        if (addGuestBtn) {
+          addGuestBtn.addEventListener("click", addGuest);
+        }
+        if (guestNameInput) {
+          guestNameInput.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") addGuest();
+          });
+        }
+        if (exportGuestsPDFBtn) {
+          exportGuestsPDFBtn.addEventListener("click", exportGuestListPDF);
+        }
+        if (resetGuestsBtn) {
+          resetGuestsBtn.addEventListener("click", resetGuests);
+        }
+
+        // Edit and delete guest event listeners
+        document.addEventListener("click", (e) => {
+          if (e.target.closest(".guest-row .edit-guest")) {
+            const btn = e.target.closest(".edit-guest");
+            const guestRow = btn.closest(".guest-row");
+            editGuest(guestRow);
+          }
+
+          // Delete guest from table - NO CONFIRMATION
+          if (e.target.closest(".guest-row .delete-guest")) {
+            const btn = e.target.closest(".delete-guest");
+            const name = btn.dataset.name;
+            const row = btn.closest(".guest-row");
+
+            // Remove from data model
+            weddingData.guests = weddingData.guests.filter(
+              (g) => g.name !== name
+            );
+
+            // Remove from tables
+            weddingData.tables.forEach((table) => {
+              if (table.guests) {
+                table.guests = table.guests.filter((g) => g !== name);
+              }
+            });
+
+            saveData();
+
+            // Remove from table
+            row.remove();
+
+            showNotification(`${name} removed from guest list`);
+
+            // Show empty state if no guests
+            if (
+              guestTableBody.children.length === 1 &&
+              guestTableBody.children[0] === emptyGuestRow
+            ) {
+              emptyGuestRow.style.display = "table-row";
+            }
+          }
+        });
+      }
 
       // Load data from localStorage if available
       function loadData() {
@@ -570,47 +639,52 @@
       function renderGuestData() {
         console.log("Rendering guest data...");
         // Clear existing data
-        guestTableBody.innerHTML = "";
-
-        // Add empty state
-        guestTableBody.appendChild(emptyGuestRow);
-
-        // Render guests
-        if (weddingData.guests && weddingData.guests.length > 0) {
-          console.log("Rendering guests:", weddingData.guests.length);
-          emptyGuestRow.style.display = "none";
-
-          weddingData.guests.forEach((guest) => {
-            addGuestToTable(
-              guest.name,
-              guest.side,
-              guest.rsvp,
-              guest.invitationSent,
-              guest.saveTheDate
-            );
-          });
+        if (guestTableBody) {
+          guestTableBody.innerHTML = "";
+          
+          // Add empty state
+          guestTableBody.appendChild(emptyGuestRow);
+          
+          // Render guests
+          if (weddingData.guests && weddingData.guests.length > 0) {
+            console.log("Rendering guests:", weddingData.guests.length);
+            emptyGuestRow.style.display = "none";
+            
+            weddingData.guests.forEach((guest) => {
+              addGuestToTable(
+                guest.name,
+                guest.side,
+                guest.rsvp,
+                guest.invitationSent,
+                guest.saveTheDate
+              );
+            });
+          }
         }
       }
 
       // Show notification
       function showNotification(message, type = "success") {
-        notificationText.textContent = message;
-        notification.className = "notification show";
-        if (type === "success") {
-          notification.classList.add("success");
-          notification.querySelector("i").className = "fas fa-check-circle";
-        } else if (type === "error") {
-          notification.classList.add("error");
-          notification.querySelector("i").className =
-            "fas fa-exclamation-circle";
+        if (notification && notificationText) {
+          notificationText.textContent = message;
+          notification.className = "notification show";
+          if (type === "success") {
+            notification.classList.add("success");
+            notification.querySelector("i").className = "fas fa-check-circle";
+          } else if (type === "error") {
+            notification.classList.add("error");
+            notification.querySelector("i").className =
+              "fas fa-exclamation-circle";
+          }
+          setTimeout(() => {
+            notification.classList.remove("show");
+          }, 3000);
         }
-        setTimeout(() => {
-          notification.classList.remove("show");
-        }, 3000);
       }
 
       // Check if guest exists anywhere
       function guestExistsAnywhere(name) {
+        if (!guestTableBody) return false;
         const inTable = [...guestTableBody.querySelectorAll(".guest-row")].some(
           (row) => row.dataset.name === name
         );
@@ -619,6 +693,8 @@
 
       // Add guest function
       function addGuest() {
+        if (!guestNameInput || !guestSideInput || !guestRSVPInput || !invitationSentInput || !saveTheDateInput) return;
+        
         const name = guestNameInput.value.trim();
         if (!name) {
           showNotification("Please enter a guest name", "error");
@@ -655,10 +731,10 @@
 
       // Add guest to table view
       function addGuestToTable(name, side, rsvp, invitationSent, saveTheDate) {
+        if (!guestTableBody || !emptyGuestRow) return;
+        
         // Remove empty state if visible
-        if (emptyGuestRow) {
-          emptyGuestRow.style.display = "none";
-        }
+        emptyGuestRow.style.display = "none";
 
         const row = document.createElement("tr");
         row.className = "guest-row";
@@ -793,7 +869,10 @@
 
             // Check if new name already exists (if name changed)
             if (newName !== name && guestExistsAnywhere(newName)) {
-              showNotification("Guest with this name already exists!", "error");
+              showNotification(
+                "Guest with this name already exists!",
+                "error"
+              );
               return;
             }
 
@@ -854,152 +933,82 @@
           });
       }
 
-      // Event listeners
-      addGuestBtn.addEventListener("click", addGuest);
-      guestNameInput.addEventListener("keypress", (e) => {
-        if (e.key === "Enter") addGuest();
-      });
-
-      // Edit guest from table
-      document.addEventListener("click", (e) => {
-        if (e.target.closest(".guest-row .edit-guest")) {
-          const btn = e.target.closest(".edit-guest");
-          const guestRow = btn.closest(".guest-row");
-          editGuest(guestRow);
-        }
-
-        // Delete guest from table
-        if (e.target.closest(".guest-row .delete-guest")) {
-          const btn = e.target.closest(".delete-guest");
-          const name = btn.dataset.name;
-          const row = btn.closest(".guest-row");
-
-          if (confirm(`Remove ${name} from guest list?`)) {
-            // Remove from data model
-            weddingData.guests = weddingData.guests.filter(
-              (g) => g.name !== name
-            );
-
-            // Remove from tables
-            weddingData.tables.forEach((table) => {
-              if (table.guests) {
-                table.guests = table.guests.filter((g) => g !== name);
-              }
-            });
-
-            saveData();
-
-            // Remove from table
-            row.remove();
-
-            showNotification(`${name} removed from guest list`);
-
-            // Show empty state if no guests
-            if (
-              guestTableBody.children.length === 1 &&
-              guestTableBody.children[0] === emptyGuestRow
-            ) {
-              emptyGuestRow.style.display = "table-row";
-            }
-          }
-        }
-      });
-
       // Export Guest List PDF
-      exportGuestsPDFBtn.addEventListener("click", () => {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        let y = 20;
-
-        doc.setFont("Playfair Display", "normal");
-        doc.setFontSize(22);
-        doc.text("Wedding Guest List", 105, y, { align: "center" });
-        y += 15;
-
-        doc.setFont("Inter", "normal");
-        doc.setFontSize(12);
-        doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 105, y, {
-          align: "center",
-        });
-        y += 15;
-
-        // Table headers
-        doc.setFont("Playfair Display", "normal");
-        doc.setFontSize(16);
-        doc.text("Guest List", 20, y);
-        y += 10;
-
-        doc.setFont("Inter", "normal");
-        doc.setFontSize(10);
-        doc.text("Name", 20, y);
-        doc.text("Side", 80, y);
-        doc.text("RSVP", 110, y);
-        doc.text("Invitation", 140, y);
-        doc.text("Save the Date", 170, y);
-        y += 5;
-
-        // Guest list rows
-        const guestRows = guestTableBody.querySelectorAll(".guest-row");
-        guestRows.forEach((row) => {
-          if (y > 270) {
-            doc.addPage();
-            y = 20;
+      function exportGuestListPDF() {
+        try {
+          // Create a simple text export
+          let guestListText = "Wedding Guest List\n";
+          guestListText += `Generated on: ${new Date().toLocaleDateString()}\n\n`;
+          guestListText += "Name\tSide\tRSVP\tInvitation\tSave the Date\n";
+          
+          if (guestTableBody) {
+            const guestRows = guestTableBody.querySelectorAll(".guest-row");
+            guestRows.forEach((row) => {
+              const name = row.dataset.name;
+              const side = row.dataset.side;
+              const rsvp = row.dataset.rsvp;
+              const invitation = row.dataset.invitation;
+              const saveTheDate = row.dataset.savethedate;
+              guestListText += `${name}\t${side}\t${rsvp}\t${invitation}\t${saveTheDate}\n`;
+            });
           }
+          
+          // Create a Blob with the text content
+          const blob = new Blob([guestListText], { type: 'text/plain' });
+          
+          // Create a temporary link to download the file
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = 'Wedding-Guest-List.txt';
+          
+          // Programmatically click the link to trigger download
+          document.body.appendChild(a);
+          a.click();
+          
+          // Clean up
+          setTimeout(() => {
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(a.href);
+          }, 100);
+          
+          showNotification("Guest list exported successfully");
+        } catch (error) {
+          console.error("Error generating guest list:", error);
+          showNotification("Error generating guest list. Please try again.", "error");
+        }
+      }
 
-          const name = row.dataset.name;
-          const side = row.dataset.side;
-          const rsvp = row.dataset.rsvp;
-          const invitation = row.dataset.invitation;
-          const saveTheDate = row.dataset.savethedate;
-
-          doc.text(name, 20, y);
-          doc.text(side, 80, y);
-          doc.text(rsvp, 110, y);
-          doc.text(invitation, 140, y);
-          doc.text(saveTheDate, 170, y);
-          y += 5;
+      // Reset guests data - NO CONFIRMATION
+      function resetGuests() {
+        // Clear guest data but keep tables
+        weddingData.guests = [];
+        
+        // Also remove guests from tables
+        weddingData.tables.forEach((table) => {
+          if (table.guests) {
+            table.guests = [];
+          }
         });
+        
+        saveData();
 
-        doc.save("Wedding-Guest-List.pdf");
-        showNotification("Guest list exported successfully");
-      });
-
-      // Reset guests data
-      resetGuestsBtn.addEventListener("click", () => {
-        if (
-          confirm(
-            "Are you sure you want to reset all guest data? This cannot be undone."
-          )
-        ) {
-          // Clear guest data but keep tables
-          weddingData.guests = [];
-
-          // Also remove guests from tables
-          weddingData.tables.forEach((table) => {
-            if (table.guests) {
-              table.guests = [];
-            }
-          });
-
-          saveData();
-
-          // Clear guest table
+        // Clear guest table
+        if (guestTableBody && emptyGuestRow) {
           guestTableBody.innerHTML = "";
           guestTableBody.appendChild(emptyGuestRow);
           emptyGuestRow.style.display = "table-row";
-
-          // Clear inputs
-          guestNameInput.value = "";
-
-          showNotification("All guest data has been reset");
         }
-      });
 
-      // Initialize empty states
-      emptyGuestRow.style.display = "table-row";
+        // Clear inputs
+        if (guestNameInput) {
+          guestNameInput.value = "";
+        }
 
-      // Load data when page loads
-      document.addEventListener("DOMContentLoaded", loadData);
+        showNotification("All guest data has been reset");
+      }
+
+      // Initialize the app when DOM is loaded
+      document.addEventListener("DOMContentLoaded", initApp);
     </script>
   </body>
 </html>
