@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Wedding Guest Manager</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;600;700&family=Dancing+Script:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      :root {
+        /* Elegant wedding color palette */
+        --primary-color: #d4a5a5; /* Soft pink */
+        --secondary-color: #f2e6e6; /* Light pink */
+        --accent-color: #f9f2f2; /* Very light pink */
+        --tertiary-color: #e6d7d7; /* Muted pink */
+        --beige-color: #f5f0e6; /* Soft beige */
+        --text-color: #6d4c41; /* Warm brown */
+        --light-text: #8d6e63; /* Lighter warm brown */
+        --background-color: transparent; /* Transparent for Notion */
+        --card-background: rgba(
+          255,
+          255,
+          255,
+          0.9
+        ); /* Semi-transparent white */
+        --border-color: rgba(212, 165, 165, 0.3);
+        --success-color: #a5d6a7;
+        --error-color: #ef9a9a;
+        --warning-color: #ffcc80;
+        --shadow-light: 0 2px 4px rgba(212, 165, 165, 0.1);
+        --shadow-medium: 0 4px 8px rgba(212, 165, 165, 0.15);
+        --shadow-heavy: 0 8px 16px rgba(212, 165, 165, 0.2);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+          Roboto, sans-serif;
+        background-color: var(--background-color);
+        margin: 0;
+        padding: 10px;
+        color: var(--text-color);
+        line-height: 1.4;
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+      .app-container {
+        max-width: 100%;
+        margin: 0 auto;
+        padding: 0;
+      }
+      h1 {
+        text-align: center;
+        color: var(--text-color);
+        font-family: "Dancing Script", cursive;
+        font-weight: 700;
+        margin: 10px 0;
+        font-size: 32px;
+        position: relative;
+        padding-bottom: 10px;
+      }
+      h1::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100px;
+        height: 3px;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          var(--primary-color),
+          transparent
+        );
+      }
+      .main-container {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        max-width: 100%;
+      }
+      .panel {
+        background-color: var(--card-background);
+        border-radius: 12px;
+        padding: 15px;
+        box-shadow: var(--shadow-light);
+        margin-bottom: 15px;
+        border: 1px solid var(--border-color);
+        position: relative;
+        overflow: hidden;
+        backdrop-filter: blur(10px);
+      }
+      .panel::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(
+          90deg,
+          var(--primary-color),
+          var(--secondary-color)
+        );
+      }
+      .form-group {
+        margin-bottom: 12px;
+      }
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 500;
+        color: var(--light-text);
+        font-size: 13px;
+      }
+      input,
+      select,
+      button {
+        width: 100%;
+        padding: 8px 10px;
+        margin-top: 3px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-size: 13px;
+        font-family: "Inter", sans-serif;
+        transition: all 0.3s ease;
+        box-sizing: border-box;
+      }
+      input:focus,
+      select:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 2px rgba(212, 165, 165, 0.2);
+      }
+      button {
+        background-color: var(--primary-color);
+        color: white;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: none;
+        margin-top: 8px;
+        padding: 8px 10px;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+      }
+      button:hover {
+        background-color: #c89292;
+      }
+      button:active {
+        transform: translateY(0);
+      }
+      .secondary-btn {
+        background-color: var(--secondary-color);
+        color: var(--primary-color);
+      }
+      .secondary-btn:hover {
+        background-color: #e6d0d0;
+      }
+      button.active {
+        background-color: var(--primary-color);
+        color: white;
+      }
+      /* Guest Table Styling */
+      .guest-table-container {
+        overflow-x: auto;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        background-color: var(--card-background);
+        margin-bottom: 15px;
+        box-shadow: var(--shadow-light);
+        max-height: 400px;
+        overflow-y: auto;
+      }
+      .guest-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+      }
+      .guest-table th {
+        background-color: var(--accent-color);
+        padding: 8px 10px;
+        text-align: left;
+        font-weight: 600;
+        color: var(--light-text);
+        border-bottom: 1px solid var(--border-color);
+        font-size: 12px;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+      .guest-table td {
+        padding: 8px 10px;
+        border-bottom: 1px solid var(--border-color);
+        font-size: 12px;
+      }
+      .guest-table tr:hover {
+        background-color: var(--accent-color);
+      }
+      .guest-table tr:last-child td {
+        border-bottom: none;
+      }
+      .status-badge {
+        display: inline-block;
+        padding: 2px 6px;
+        border-radius: 12px;
+        font-size: 10px;
+        font-weight: 500;
+        text-align: center;
+      }
+      .status-attending {
+        background-color: rgba(165, 214, 167, 0.2);
+        color: #2e7d32;
+      }
+      .status-pending {
+        background-color: rgba(255, 204, 128, 0.2);
+        color: #e65100;
+      }
+      .status-declined {
+        background-color: rgba(239, 154, 154, 0.2);
+        color: #c62828;
+      }
+      .side-badge {
+        display: inline-block;
+        padding: 2px 6px;
+        border-radius: 12px;
+        font-size: 10px;
+        font-weight: 500;
+      }
+      .side-bride {
+        background-color: rgba(255, 182, 193, 0.3);
+        color: #d63384;
+      }
+      .side-groom {
+        background-color: rgba(173, 216, 230, 0.3);
+        color: #0d6efd;
+      }
+      .side-couple {
+        background-color: rgba(204, 153, 255, 0.3);
+        color: #6f42c1;
+      }
+      .side-other {
+        background-color: rgba(211, 211, 211, 0.3);
+        color: #6c757d;
+      }
+      .edit-guest,
+      .delete-guest {
+        background: none;
+        border: none;
+        color: var(--primary-color);
+        cursor: pointer;
+        font-size: 12px;
+        padding: 0;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: all 0.3s;
+      }
+      .edit-guest:hover,
+      .delete-guest:hover {
+        background-color: rgba(212, 165, 165, 0.1);
+      }
+      /* Edit Form */
+      .edit-form {
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--border-color);
+        background-color: var(--accent-color);
+      }
+      .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        color: var(--light-text);
+        text-align: center;
+      }
+      .empty-state i {
+        font-size: 32px;
+        margin-bottom: 10px;
+        opacity: 0.5;
+      }
+      .empty-state p {
+        font-size: 14px;
+        max-width: 180px;
+        line-height: 1.3;
+      }
+      .notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background-color: white;
+        color: var(--text-color);
+        padding: 12px 16px;
+        border-radius: 8px;
+        box-shadow: var(--shadow-medium);
+        border-left: 4px solid var(--primary-color);
+        z-index: 2000;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transform: translateX(120%);
+        transition: transform 0.3s ease;
+      }
+      .notification.show {
+        transform: translateX(0);
+      }
+      .notification i {
+        color: var(--primary-color);
+        font-size: 16px;
+      }
+      .notification.success {
+        border-left-color: var(--success-color);
+      }
+      .notification.success i {
+        color: var(--success-color);
+      }
+      .notification.error {
+        border-left-color: var(--error-color);
+      }
+      .notification.error i {
+        color: var(--error-color);
+      }
+      /* Action buttons styling */
+      .action-buttons {
+        display: flex;
+        gap: 4px;
+      }
+      .action-buttons button {
+        width: auto;
+        margin: 0;
+        padding: 4px 6px;
+        font-size: 11px;
+      }
+      /* For Notion embed optimization */
+      @media (min-width: 769px) {
+        .main-container {
+          flex-direction: row;
+        }
+        .left-panel {
+          width: 300px;
+        }
+        .right-panel {
+          flex: 1;
+        }
+      }
+      @media (max-width: 768px) {
+        .app-container {
+          padding: 0 5px;
+        }
+        h1 {
+          font-size: 24px;
+        }
+        input,
+        select,
+        button {
+          font-size: 12px;
+          padding: 7px 9px;
+        }
+        .guest-table-container {
+          font-size: 11px;
+        }
+        .guest-table th,
+        .guest-table td {
+          padding: 6px 8px;
+        }
+        .action-buttons {
+          flex-direction: column;
+          gap: 2px;
+        }
+        .action-buttons button {
+          padding: 3px 5px;
+          font-size: 10px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-container">
+      <h1>Wedding Guest Manager</h1>
+      <div class="main-container">
+        <div class="left-panel">
+          <div class="panel">
+            <h2
+              style="
+                margin-top: 0;
+                color: var(--text-color);
+                font-size: 18px;
+                font-weight: 600;
+                font-family: 'Playfair Display', serif;
+              "
+            >
+              Add Guest
+            </h2>
+            <div class="form-group">
+              <label for="guestName">Guest Name</label>
+              <input
+                type="text"
+                id="guestName"
+                placeholder="Enter guest name"
+              />
+            </div>
+            <div class="form-group">
+              <label for="guestSide">Side</label>
+              <select id="guestSide">
+                <option value="Bride">Bride</option>
+                <option value="Groom">Groom</option>
+                <option value="Couple">Couple</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="guestRSVP">RSVP Status</label>
+              <select id="guestRSVP">
+                <option value="Attending">Attending</option>
+                <option value="Declined">Declined</option>
+                <option value="Pending">Pending</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="invitationSent">Invitation Sent</label>
+              <select id="invitationSent">
+                <option value="Yes">Yes</option>
+                <option value="No">No</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="saveTheDate">Save The Date Sent</label>
+              <select id="saveTheDate">
+                <option value="Yes">Yes</option>
+                <option value="No">No</option>
+              </select>
+            </div>
+            <button id="addGuest">
+              <i class="fas fa-user-plus"></i> Add Guest
+            </button>
+            <div
+              style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px"
+            >
+              <button id="exportGuestsPDF" class="secondary-btn">
+                <i class="fas fa-file-pdf"></i> Export Guest List
+              </button>
+              <button id="resetGuests" class="secondary-btn">
+                <i class="fas fa-redo"></i> Reset Guests
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="right-panel">
+          <!-- Guest List Table -->
+          <div class="guest-table-container">
+            <div
+              class="guest-list-header"
+              style="
+                padding: 12px;
+                font-size: 16px;
+                font-weight: 600;
+                font-family: 'Playfair Display', serif;
+                background-color: var(--accent-color);
+                border-bottom: 1px solid var(--border-color);
+              "
+            >
+              <i class="fas fa-users"></i> Guest List
+            </div>
+            <table class="guest-table">
+              <thead>
+                <tr>
+                  <th>Guest Name</th>
+                  <th>Side</th>
+                  <th>RSVP</th>
+                  <th>Invitation</th>
+                  <th>Save the Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="guestTableBody">
+                <tr id="emptyGuestRow">
+                  <td
+                    colspan="6"
+                    style="
+                      text-align: center;
+                      padding: 20px;
+                      color: var(--light-text);
+                    "
+                  >
+                    <i class="fas fa-users"></i><br />No guests added yet
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="notification" id="notification">
+      <i class="fas fa-check-circle"></i>
+      <span id="notificationText">Notification text</span>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+      // Initialize data from localStorage or set defaults
+      let weddingData = {
+        guests: [],
+        tables: [],
+        tablePositions: {},
+      };
+
+      // DOM Elements
+      const guestNameInput = document.getElementById("guestName");
+      const guestSideInput = document.getElementById("guestSide");
+      const guestRSVPInput = document.getElementById("guestRSVP");
+      const invitationSentInput = document.getElementById("invitationSent");
+      const saveTheDateInput = document.getElementById("saveTheDate");
+      const addGuestBtn = document.getElementById("addGuest");
+      const guestTableBody = document.getElementById("guestTableBody");
+      const exportGuestsPDFBtn = document.getElementById("exportGuestsPDF");
+      const resetGuestsBtn = document.getElementById("resetGuests");
+      const emptyGuestRow = document.getElementById("emptyGuestRow");
+      const notification = document.getElementById("notification");
+      const notificationText = document.getElementById("notificationText");
+
+      // Load data from localStorage if available
+      function loadData() {
+        try {
+          const savedData = localStorage.getItem("weddingSeatingData");
+          if (savedData) {
+            weddingData = JSON.parse(savedData);
+            console.log("Data loaded from localStorage:", weddingData);
+            renderGuestData();
+          } else {
+            console.log("No saved data found, using defaults");
+          }
+        } catch (error) {
+          console.error("Error loading data from localStorage:", error);
+        }
+      }
+
+      // Save data to localStorage
+      function saveData() {
+        try {
+          localStorage.setItem(
+            "weddingSeatingData",
+            JSON.stringify(weddingData)
+          );
+          console.log("Data saved to localStorage:", weddingData);
+        } catch (error) {
+          console.error("Error saving data to localStorage:", error);
+          showNotification(
+            "Error saving data. Your browser may not support local storage.",
+            "error"
+          );
+        }
+      }
+
+      // Render guest data
+      function renderGuestData() {
+        console.log("Rendering guest data...");
+        // Clear existing data
+        guestTableBody.innerHTML = "";
+
+        // Add empty state
+        guestTableBody.appendChild(emptyGuestRow);
+
+        // Render guests
+        if (weddingData.guests && weddingData.guests.length > 0) {
+          console.log("Rendering guests:", weddingData.guests.length);
+          emptyGuestRow.style.display = "none";
+
+          weddingData.guests.forEach((guest) => {
+            addGuestToTable(
+              guest.name,
+              guest.side,
+              guest.rsvp,
+              guest.invitationSent,
+              guest.saveTheDate
+            );
+          });
+        }
+      }
+
+      // Show notification
+      function showNotification(message, type = "success") {
+        notificationText.textContent = message;
+        notification.className = "notification show";
+        if (type === "success") {
+          notification.classList.add("success");
+          notification.querySelector("i").className = "fas fa-check-circle";
+        } else if (type === "error") {
+          notification.classList.add("error");
+          notification.querySelector("i").className =
+            "fas fa-exclamation-circle";
+        }
+        setTimeout(() => {
+          notification.classList.remove("show");
+        }, 3000);
+      }
+
+      // Check if guest exists anywhere
+      function guestExistsAnywhere(name) {
+        const inTable = [...guestTableBody.querySelectorAll(".guest-row")].some(
+          (row) => row.dataset.name === name
+        );
+        return inTable;
+      }
+
+      // Add guest function
+      function addGuest() {
+        const name = guestNameInput.value.trim();
+        if (!name) {
+          showNotification("Please enter a guest name", "error");
+          return;
+        }
+        if (guestExistsAnywhere(name)) {
+          showNotification("Guest already exists!", "error");
+          return;
+        }
+
+        const side = guestSideInput.value;
+        const rsvp = guestRSVPInput.value;
+        const invitationSent = invitationSentInput.value;
+        const saveTheDate = saveTheDateInput.value;
+
+        // Add to data model
+        const guest = {
+          name,
+          side,
+          rsvp,
+          invitationSent,
+          saveTheDate,
+        };
+        weddingData.guests.push(guest);
+        saveData();
+
+        // Add to table view
+        addGuestToTable(name, side, rsvp, invitationSent, saveTheDate);
+
+        // Clear form
+        guestNameInput.value = "";
+        showNotification(`Guest "${name}" added successfully`);
+      }
+
+      // Add guest to table view
+      function addGuestToTable(name, side, rsvp, invitationSent, saveTheDate) {
+        // Remove empty state if visible
+        if (emptyGuestRow) {
+          emptyGuestRow.style.display = "none";
+        }
+
+        const row = document.createElement("tr");
+        row.className = "guest-row";
+        row.dataset.name = name;
+        row.dataset.side = side;
+        row.dataset.rsvp = rsvp;
+        row.dataset.invitation = invitationSent;
+        row.dataset.savethedate = saveTheDate;
+
+        const sideClass = side.toLowerCase();
+        const rsvpClass = rsvp.toLowerCase();
+
+        row.innerHTML = `
+          <td>${name}</td>
+          <td><span class="side-badge side-${sideClass}">${side}</span></td>
+          <td><span class="status-badge status-${rsvpClass}">${rsvp}</span></td>
+          <td>${invitationSent}</td>
+          <td>${saveTheDate}</td>
+          <td>
+            <div class="action-buttons">
+              <button class="edit-guest" data-name="${name}">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button class="delete-guest" data-name="${name}">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </td>
+        `;
+
+        guestTableBody.appendChild(row);
+      }
+
+      // Edit guest function
+      function editGuest(guestElement) {
+        const name = guestElement.dataset.name;
+        const side = guestElement.dataset.side;
+        const rsvp = guestElement.dataset.rsvp;
+        const invitation = guestElement.dataset.invitation || "No";
+        const saveTheDate = guestElement.dataset.savethedate || "No";
+
+        // Create edit form
+        const editForm = document.createElement("div");
+        editForm.className = "edit-form";
+        editForm.innerHTML = `
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label>Guest Name</label>
+            <input type="text" id="editGuestName" value="${name}">
+          </div>
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label>Side</label>
+            <select id="editGuestSide">
+              <option value="Bride" ${
+                side === "Bride" ? "selected" : ""
+              }>Bride</option>
+              <option value="Groom" ${
+                side === "Groom" ? "selected" : ""
+              }>Groom</option>
+              <option value="Couple" ${
+                side === "Couple" ? "selected" : ""
+              }>Couple</option>
+              <option value="Other" ${
+                side === "Other" ? "selected" : ""
+              }>Other</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label>RSVP Status</label>
+            <select id="editGuestRSVP">
+              <option value="Attending" ${
+                rsvp === "Attending" ? "selected" : ""
+              }>Attending</option>
+              <option value="Declined" ${
+                rsvp === "Declined" ? "selected" : ""
+              }>Declined</option>
+              <option value="Pending" ${
+                rsvp === "Pending" ? "selected" : ""
+              }>Pending</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label>Invitation Sent</label>
+            <select id="editInvitationSent">
+              <option value="Yes" ${
+                invitation === "Yes" ? "selected" : ""
+              }>Yes</option>
+              <option value="No" ${
+                invitation === "No" ? "selected" : ""
+              }>No</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label>Save The Date Sent</label>
+            <select id="editSaveTheDate">
+              <option value="Yes" ${
+                saveTheDate === "Yes" ? "selected" : ""
+              }>Yes</option>
+              <option value="No" ${
+                saveTheDate === "No" ? "selected" : ""
+              }>No</option>
+            </select>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button id="saveGuestEdit"><i class="fas fa-save"></i> Save</button>
+            <button id="cancelGuestEdit" class="secondary-btn"><i class="fas fa-times"></i> Cancel</button>
+          </div>
+        `;
+
+        // Replace the guest element with the form
+        const newRow = document.createElement("tr");
+        newRow.appendChild(editForm);
+        guestElement.parentNode.replaceChild(newRow, guestElement);
+
+        // Handle save
+        document
+          .getElementById("saveGuestEdit")
+          .addEventListener("click", () => {
+            const newName = document
+              .getElementById("editGuestName")
+              .value.trim();
+            const newSide = document.getElementById("editGuestSide").value;
+            const newRSVP = document.getElementById("editGuestRSVP").value;
+            const newInvitation =
+              document.getElementById("editInvitationSent").value;
+            const newSaveTheDate =
+              document.getElementById("editSaveTheDate").value;
+
+            if (!newName) {
+              showNotification("Guest name cannot be empty", "error");
+              return;
+            }
+
+            // Check if new name already exists (if name changed)
+            if (newName !== name && guestExistsAnywhere(newName)) {
+              showNotification("Guest with this name already exists!", "error");
+              return;
+            }
+
+            // Update data model
+            const guestIndex = weddingData.guests.findIndex(
+              (g) => g.name === name
+            );
+            if (guestIndex !== -1) {
+              weddingData.guests[guestIndex] = {
+                name: newName,
+                side: newSide,
+                rsvp: newRSVP,
+                invitationSent: newInvitation,
+                saveTheDate: newSaveTheDate,
+              };
+              saveData();
+            }
+
+            // Update the guest element with new values
+            guestElement.dataset.name = newName;
+            guestElement.dataset.side = newSide;
+            guestElement.dataset.rsvp = newRSVP;
+            guestElement.dataset.invitation = newInvitation;
+            guestElement.dataset.savethedate = newSaveTheDate;
+
+            const sideClass = newSide.toLowerCase();
+            const rsvpClass = newRSVP.toLowerCase();
+
+            guestElement.innerHTML = `
+              <td>${newName}</td>
+              <td><span class="side-badge side-${sideClass}">${newSide}</span></td>
+              <td><span class="status-badge status-${rsvpClass}">${newRSVP}</span></td>
+              <td>${newInvitation}</td>
+              <td>${newSaveTheDate}</td>
+              <td>
+                <div class="action-buttons">
+                  <button class="edit-guest" data-name="${newName}">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button class="delete-guest" data-name="${newName}">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </td>
+            `;
+
+            // Replace form with updated guest element
+            newRow.parentNode.replaceChild(guestElement, newRow);
+
+            showNotification(`Guest "${newName}" updated successfully`);
+          });
+
+        // Handle cancel
+        document
+          .getElementById("cancelGuestEdit")
+          .addEventListener("click", () => {
+            newRow.parentNode.replaceChild(guestElement, newRow);
+          });
+      }
+
+      // Event listeners
+      addGuestBtn.addEventListener("click", addGuest);
+      guestNameInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") addGuest();
+      });
+
+      // Edit guest from table
+      document.addEventListener("click", (e) => {
+        if (e.target.closest(".guest-row .edit-guest")) {
+          const btn = e.target.closest(".edit-guest");
+          const guestRow = btn.closest(".guest-row");
+          editGuest(guestRow);
+        }
+
+        // Delete guest from table
+        if (e.target.closest(".guest-row .delete-guest")) {
+          const btn = e.target.closest(".delete-guest");
+          const name = btn.dataset.name;
+          const row = btn.closest(".guest-row");
+
+          if (confirm(`Remove ${name} from guest list?`)) {
+            // Remove from data model
+            weddingData.guests = weddingData.guests.filter(
+              (g) => g.name !== name
+            );
+
+            // Remove from tables
+            weddingData.tables.forEach((table) => {
+              if (table.guests) {
+                table.guests = table.guests.filter((g) => g !== name);
+              }
+            });
+
+            saveData();
+
+            // Remove from table
+            row.remove();
+
+            showNotification(`${name} removed from guest list`);
+
+            // Show empty state if no guests
+            if (
+              guestTableBody.children.length === 1 &&
+              guestTableBody.children[0] === emptyGuestRow
+            ) {
+              emptyGuestRow.style.display = "table-row";
+            }
+          }
+        }
+      });
+
+      // Export Guest List PDF
+      exportGuestsPDFBtn.addEventListener("click", () => {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        let y = 20;
+
+        doc.setFont("Playfair Display", "normal");
+        doc.setFontSize(22);
+        doc.text("Wedding Guest List", 105, y, { align: "center" });
+        y += 15;
+
+        doc.setFont("Inter", "normal");
+        doc.setFontSize(12);
+        doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 105, y, {
+          align: "center",
+        });
+        y += 15;
+
+        // Table headers
+        doc.setFont("Playfair Display", "normal");
+        doc.setFontSize(16);
+        doc.text("Guest List", 20, y);
+        y += 10;
+
+        doc.setFont("Inter", "normal");
+        doc.setFontSize(10);
+        doc.text("Name", 20, y);
+        doc.text("Side", 80, y);
+        doc.text("RSVP", 110, y);
+        doc.text("Invitation", 140, y);
+        doc.text("Save the Date", 170, y);
+        y += 5;
+
+        // Guest list rows
+        const guestRows = guestTableBody.querySelectorAll(".guest-row");
+        guestRows.forEach((row) => {
+          if (y > 270) {
+            doc.addPage();
+            y = 20;
+          }
+
+          const name = row.dataset.name;
+          const side = row.dataset.side;
+          const rsvp = row.dataset.rsvp;
+          const invitation = row.dataset.invitation;
+          const saveTheDate = row.dataset.savethedate;
+
+          doc.text(name, 20, y);
+          doc.text(side, 80, y);
+          doc.text(rsvp, 110, y);
+          doc.text(invitation, 140, y);
+          doc.text(saveTheDate, 170, y);
+          y += 5;
+        });
+
+        doc.save("Wedding-Guest-List.pdf");
+        showNotification("Guest list exported successfully");
+      });
+
+      // Reset guests data
+      resetGuestsBtn.addEventListener("click", () => {
+        if (
+          confirm(
+            "Are you sure you want to reset all guest data? This cannot be undone."
+          )
+        ) {
+          // Clear guest data but keep tables
+          weddingData.guests = [];
+
+          // Also remove guests from tables
+          weddingData.tables.forEach((table) => {
+            if (table.guests) {
+              table.guests = [];
+            }
+          });
+
+          saveData();
+
+          // Clear guest table
+          guestTableBody.innerHTML = "";
+          guestTableBody.appendChild(emptyGuestRow);
+          emptyGuestRow.style.display = "table-row";
+
+          // Clear inputs
+          guestNameInput.value = "";
+
+          showNotification("All guest data has been reset");
+        }
+      });
+
+      // Initialize empty states
+      emptyGuestRow.style.display = "table-row";
+
+      // Load data when page loads
+      document.addEventListener("DOMContentLoaded", loadData);
+    </script>
+  </body>
+</html>
